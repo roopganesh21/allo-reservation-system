@@ -21,6 +21,11 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("🌱 Seeding started...");
 
+  // Clear existing reservations to clean the system slate completely
+  console.log("🧹 Clearing old reservations...");
+  await prisma.reservation.deleteMany({});
+  console.log("✅ Old reservations cleared.");
+
   // 1. Create/Upsert Products
   const headphones = await prisma.product.upsert({
     where: { id: "wireless-headphones" },
@@ -81,7 +86,7 @@ async function main() {
         warehouseId: mumbai.id,
       },
     },
-    update: { totalUnits: 10 },
+    update: { totalUnits: 10, reservedUnits: 0 },
     create: {
       productId: headphones.id,
       warehouseId: mumbai.id,
@@ -97,7 +102,7 @@ async function main() {
         warehouseId: mumbai.id,
       },
     },
-    update: { totalUnits: 5 },
+    update: { totalUnits: 5, reservedUnits: 0 },
     create: {
       productId: keyboard.id,
       warehouseId: mumbai.id,
@@ -113,7 +118,7 @@ async function main() {
         warehouseId: mumbai.id,
       },
     },
-    update: { totalUnits: 8 },
+    update: { totalUnits: 8, reservedUnits: 0 },
     create: {
       productId: hub.id,
       warehouseId: mumbai.id,
@@ -130,7 +135,7 @@ async function main() {
         warehouseId: delhi.id,
       },
     },
-    update: { totalUnits: 3 },
+    update: { totalUnits: 3, reservedUnits: 0 },
     create: {
       productId: headphones.id,
       warehouseId: delhi.id,
@@ -146,7 +151,7 @@ async function main() {
         warehouseId: delhi.id,
       },
     },
-    update: { totalUnits: 1 },
+    update: { totalUnits: 1, reservedUnits: 0 },
     create: {
       productId: keyboard.id,
       warehouseId: delhi.id,
@@ -162,7 +167,7 @@ async function main() {
         warehouseId: delhi.id,
       },
     },
-    update: { totalUnits: 6 },
+    update: { totalUnits: 6, reservedUnits: 0 },
     create: {
       productId: hub.id,
       warehouseId: delhi.id,
