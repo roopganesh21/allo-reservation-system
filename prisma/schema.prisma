@@ -1,10 +1,5 @@
-// Generate Prisma schema with models: Product, Warehouse, Inventory, Reservation
-// Product has id (cuid) and name
-// Warehouse has id (cuid) and name
-// Inventory has totalUnits, reservedUnits (default 0), belongs to Product and Warehouse
-// Inventory has unique constraint on productId + warehouseId
-// Reservation has status enum: PENDING, CONFIRMED, RELEASED
-// Reservation has quantity, expiresAt DateTime, createdAt, belongs to Inventory
+// Prisma Schema Configuration for Allo Reservation System
+// Configured for high-concurrency warehouse transactions
 
 generator client {
   provider = "prisma-client"
