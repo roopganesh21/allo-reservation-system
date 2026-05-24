@@ -79,7 +79,7 @@ export default async function ProductsPage() {
                 Concurrency-Safe Database Locking
               </h2>
               <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-                This reservation dashboard implements **row-level locking** utilizing PostgreSQL's 
+                This reservation dashboard implements **row-level locking** utilizing PostgreSQL&apos;s 
                 <code className="mx-1 px-1.5 py-0.5 rounded bg-slate-900 text-cyan-400 border border-slate-800 text-xs font-mono font-bold">SELECT ... FOR UPDATE</code>.
                 When a user attempts to lock quantity, other write operations on that specific warehouse row are blocked, preventing race-conditions or double-bookings under high concurrent load.
               </p>
@@ -123,7 +123,7 @@ export default async function ProductsPage() {
               </div>
               <div className="space-y-2">
                 <p className="text-slate-500">{"// Step 1: Secure database connection"}</p>
-                <p className="text-cyan-400 font-semibold">tx.$queryRaw`SELECT * FROM "Inventory" WHERE id = $1 FOR UPDATE`</p>
+                <p className="text-cyan-400 font-semibold">tx.$queryRaw`SELECT * FROM &quot;Inventory&quot; WHERE id = $1 FOR UPDATE`</p>
                 <p className="text-emerald-400">⚡ ROW LOCKED (Other sessions waiting on row id...)</p>
                 <p className="text-slate-500">{"// Step 2: Validate live units"}</p>
                 <p className="text-slate-300">availableUnits = {`totalUnits (${10}) - reservedUnits (${0})`}</p>

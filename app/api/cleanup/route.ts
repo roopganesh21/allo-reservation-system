@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // Next.js App Router POST handler for expired reservation cleanup
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     const now = new Date();
 

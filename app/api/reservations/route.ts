@@ -60,12 +60,13 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(reservation, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ POST /api/reservations failed:", error);
 
     // Return custom error statuses for anticipated database conflicts/issues
-    if (error.status) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error && typeof error === "object" && "status" in error && "message" in error) {
+      const err = error as { status: number; message: string };
+      return NextResponse.json({ error: err.message }, { status: err.status });
     }
 
     return NextResponse.json(
