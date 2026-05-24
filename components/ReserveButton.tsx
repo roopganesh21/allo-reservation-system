@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2, Plus, Minus } from "lucide-react";
+import { Loader2, Plus, Minus, ShoppingCart } from "lucide-react";
 
 interface ReserveButtonProps {
   inventoryId: string;
@@ -36,127 +35,146 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
     setLoading(true);
     setError(null);
 
-    const toastId = toast.loading("Securing database lock...", {
-      description: "Acquiring row-level transaction lock on Supabase...",
-    });
+    const toastId = toast.loading("Reserving stock...");
 
     try {
       const response = await fetch("/api/reservations", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          inventoryId,
-          quantity,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inventoryId, quantity }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         if (response.status === 409) {
-          // Dynamically parse the available units from the error message if possible
           const match = data.error?.match(/Only (\d+) units/);
           const currentAvailable = match ? match[1] : availableUnits;
-
-          setError(`Only ${currentAvailable} units available — someone may have just taken the last one.`);
-          toast.error("Reservation Failed", {
-            id: toastId,
-            description: `Only ${currentAvailable} units available — someone may have just taken the last one.`,
-          });
-
-          // Refresh the page to sync available stocks in the UI
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          const msg = `Only ${currentAvailable} units available — someone may have just taken the last one.`;
+          setError(msg);
+          toast.error("Not enough stock", { id: toastId, description: msg });
+          setTimeout(() => window.location.reload(), 2000);
         } else {
-          setError(data.error || "An unexpected error occurred.");
-          toast.error("Failed to Reserve", {
-            id: toastId,
-            description: data.error || "An unexpected error occurred.",
-          });
+          const msg = data.error || "An unexpected error occurred.";
+          setError(msg);
+          toast.error("Reservation failed", { id: toastId, description: msg });
         }
         return;
       }
 
-      toast.success("Stock Reserved Successfully!", {
+      toast.success(`${quantity} unit${quantity > 1 ? "s" : ""} reserved — 10 min hold`, {
         id: toastId,
-        description: `Locked ${quantity} units for 10 minutes.`,
       });
-
-      // Redirect to checkout page
       router.push(`/checkout/${data.id}`);
-    } catch (err) {
-      console.error("Reservation request failed:", err);
-      setError("Network error. Please try again.");
-      toast.error("Connection Failed", {
-        id: toastId,
-        description: "Network error. Please try again.",
-      });
+    } catch {
+      const msg = "Network error. Please try again.";
+      setError(msg);
+      toast.error("Connection failed", { id: toastId, description: msg });
     } finally {
       setLoading(false);
     }
   };
 
+  // Out of stock state
   if (availableUnits <= 0) {
     return (
-      <Button disabled variant="outline" className="w-full border-red-500/25 bg-red-950/10 text-red-400">
+      <div
+        className="w-full rounded-lg px-4 py-2.5 text-center text-sm font-semibold"
+        style={{
+          background: "var(--red-lt)",
+          color: "var(--red)",
+          border: "1px solid color-mix(in srgb, var(--red) 20%, transparent)",
+        }}
+      >
         Out of Stock
-      </Button>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3.5 w-full">
-      <div className="flex items-center justify-between bg-slate-950/40 border border-slate-800/80 rounded-lg p-1.5 gap-4">
-        <span className="text-xs text-slate-400 font-semibold ml-2.5 select-none">Quantity:</span>
-        <div className="flex items-center gap-1.5">
-          <Button
+    <div className="flex flex-col gap-2.5 w-full">
+
+      {/* Quantity selector */}
+      <div
+        className="flex items-center justify-between rounded-lg px-3 py-2"
+        style={{
+          background: "var(--muted)",
+          border: "1px solid var(--border)",
+        }}
+      >
+        <span className="text-xs font-semibold" style={{ color: "var(--muted-foreground)" }}>
+          Quantity
+        </span>
+        <div className="flex items-center gap-2">
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
             onClick={handleDecrement}
             disabled={quantity <= 1 || loading}
-            className="h-8 w-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 active:scale-95 transition-all"
+            className="h-7 w-7 rounded-md flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+              color: "var(--foreground)",
+            }}
           >
-            <Minus className="h-3.5 w-3.5" />
-          </Button>
-          <span className="text-sm font-bold text-slate-200 w-6 text-center select-none">
+            <Minus className="h-3 w-3" />
+          </button>
+
+          <span
+            className="text-sm font-bold w-5 text-center"
+            style={{ color: "var(--foreground)" }}
+          >
             {quantity}
           </span>
-          <Button
+
+          <button
             type="button"
-            variant="ghost"
-            size="icon"
             onClick={handleIncrement}
             disabled={quantity >= availableUnits || loading}
-            className="h-8 w-8 text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 active:scale-95 transition-all"
+            className="h-7 w-7 rounded-md flex items-center justify-center transition-all active:scale-95 disabled:opacity-40"
+            style={{
+              background: "var(--card)",
+              border: "1px solid var(--border)",
+              color: "var(--foreground)",
+            }}
           >
-            <Plus className="h-3.5 w-3.5" />
-          </Button>
+            <Plus className="h-3 w-3" />
+          </button>
         </div>
       </div>
 
-      <Button
+      {/* Reserve button */}
+      <button
         onClick={handleReserve}
         disabled={loading}
-        className="w-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold tracking-wide shadow-md shadow-cyan-950/30 transition-all hover:shadow-lg hover:shadow-cyan-500/10 active:scale-[0.98]"
+        className="btn-teal w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg"
       >
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin text-cyan-200" />
-            Locking Row...
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Reserving...
           </>
         ) : (
-          "Reserve Stock"
+          <>
+            <ShoppingCart className="h-4 w-4" />
+            Reserve
+          </>
         )}
-      </Button>
+      </button>
 
+      {/* 409 error */}
       {error && (
-        <p className="text-xs font-semibold text-red-400 text-center animate-pulse">
-          ⚠️ {error}
-        </p>
+        <div
+          className="rounded-lg px-3 py-2.5 text-xs font-semibold flex items-start gap-2"
+          style={{
+            background: "var(--red-lt)",
+            color: "var(--red)",
+            border: "1px solid color-mix(in srgb, var(--red) 20%, transparent)",
+          }}
+        >
+          <span className="flex-shrink-0 mt-0.5">⚠️</span>
+          <span>{error}</span>
+        </div>
       )}
     </div>
   );
