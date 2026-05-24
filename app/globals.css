@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Space Grotesk', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -33,40 +33,39 @@
 }
 
 :root {
-  --background: oklch(0.09 0.018 264);
-  --foreground: oklch(0.96 0.004 240);
-  --card: oklch(0.13 0.022 264);
-  --card-foreground: oklch(0.96 0.004 240);
-  --popover: oklch(0.13 0.022 264);
-  --popover-foreground: oklch(0.96 0.004 240);
-  --primary: oklch(0.72 0.28 195);
-  --primary-foreground: oklch(0.09 0.018 264);
-  --secondary: oklch(0.18 0.028 264);
-  --secondary-foreground: oklch(0.85 0.01 240);
-  --muted: oklch(0.16 0.022 264);
-  --muted-foreground: oklch(0.58 0.02 255);
-  --accent: oklch(0.78 0.24 145);
-  --accent-foreground: oklch(0.09 0 0);
-  --destructive: oklch(0.65 0.24 25);
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.72 0.28 195);
+  --background: oklch(0.98 0.003 240);
+  --foreground: oklch(0.15 0.02 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 255);
+  --primary: oklch(0.52 0.24 264);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.008 240);
+  --secondary-foreground: oklch(0.25 0.02 255);
+  --muted: oklch(0.95 0.006 240);
+  --muted-foreground: oklch(0.50 0.015 255);
+  --accent: oklch(0.95 0.006 240);
+  --accent-foreground: oklch(0.25 0.02 255);
+  --destructive: oklch(0.58 0.22 25);
+  --border: oklch(0.90 0.008 240);
+  --input: oklch(0.90 0.008 240);
+  --ring: oklch(0.52 0.24 264);
   --radius: 0.75rem;
 
-  /* Vivid brand palette */
-  --cyan:   oklch(0.72 0.28 195);
-  --green:  oklch(0.78 0.24 145);
-  --amber:  oklch(0.82 0.22 80);
-  --red:    oklch(0.65 0.24 25);
-  --violet: oklch(0.68 0.26 280);
-  --pink:   oklch(0.72 0.24 340);
+  --brand-indigo: oklch(0.52 0.24 264);
+  --brand-cyan:   oklch(0.62 0.20 210);
+  --brand-green:  oklch(0.55 0.18 150);
+  --brand-amber:  oklch(0.68 0.18 75);
+  --brand-red:    oklch(0.55 0.20 25);
+  --brand-violet: oklch(0.55 0.22 290);
 }
 
 @layer base {
   * { @apply border-border outline-ring/50; }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
   code, pre, .font-mono {
@@ -75,125 +74,52 @@
 }
 
 @layer utilities {
-  /* Animated gradient border */
-  .gradient-border {
-    position: relative;
-    border-radius: var(--radius);
-  }
-  .gradient-border::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg,
-      oklch(0.72 0.28 195),
-      oklch(0.78 0.24 145),
-      oklch(0.68 0.26 280)
-    );
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-  .gradient-border:hover::before { opacity: 1; }
-
-  /* Glowing card */
+  /* Card hover */
   .card-glow {
-    transition: box-shadow 0.3s ease, transform 0.2s ease, border-color 0.3s ease;
+    transition: box-shadow 0.25s ease, transform 0.2s ease, border-color 0.25s ease;
   }
   .card-glow:hover {
-    transform: translateY(-3px);
-    box-shadow:
-      0 0 0 1px oklch(0.72 0.28 195 / 30%),
-      0 20px 60px oklch(0.72 0.28 195 / 10%);
-    border-color: oklch(0.72 0.28 195 / 30%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px oklch(0.52 0.24 264 / 12%);
+    border-color: oklch(0.52 0.24 264 / 35%) !important;
   }
 
-  /* Neon text */
-  .text-cyan  { color: var(--cyan);   }
-  .text-green { color: var(--green);  }
-  .text-amber { color: var(--amber);  }
-  .text-vred  { color: var(--red);    }
-  .text-violet{ color: var(--violet); }
-
-  /* Neon glow text */
-  .glow-cyan {
-    color: var(--cyan);
-    text-shadow: 0 0 20px oklch(0.72 0.28 195 / 60%);
-  }
-  .glow-green {
-    color: var(--green);
-    text-shadow: 0 0 20px oklch(0.78 0.24 145 / 60%);
-  }
-
-  /* Status badges */
-  .badge-cyan {
-    background: oklch(0.72 0.28 195 / 12%);
-    color: var(--cyan);
-    border: 1px solid oklch(0.72 0.28 195 / 30%);
-    border-radius: 999px;
-    padding: 2px 10px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-  }
+  /* Badges */
   .badge-green {
-    background: oklch(0.78 0.24 145 / 12%);
-    color: var(--green);
-    border: 1px solid oklch(0.78 0.24 145 / 30%);
+    background: oklch(0.55 0.18 150 / 10%);
+    color: oklch(0.40 0.16 150);
+    border: 1px solid oklch(0.55 0.18 150 / 25%);
     border-radius: 999px;
     padding: 2px 10px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
   }
   .badge-red {
-    background: oklch(0.65 0.24 25 / 12%);
-    color: var(--red);
-    border: 1px solid oklch(0.65 0.24 25 / 30%);
+    background: oklch(0.55 0.20 25 / 10%);
+    color: oklch(0.42 0.18 25);
+    border: 1px solid oklch(0.55 0.20 25 / 25%);
     border-radius: 999px;
     padding: 2px 10px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
   }
   .badge-amber {
-    background: oklch(0.82 0.22 80 / 12%);
-    color: var(--amber);
-    border: 1px solid oklch(0.82 0.22 80 / 30%);
+    background: oklch(0.68 0.18 75 / 10%);
+    color: oklch(0.48 0.16 75);
+    border: 1px solid oklch(0.68 0.18 75 / 25%);
     border-radius: 999px;
     padding: 2px 10px;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.03em;
   }
-
-  /* Mesh background */
-  .mesh-bg {
-    background-image:
-      radial-gradient(at 15% 15%, oklch(0.72 0.28 195 / 8%) 0px, transparent 55%),
-      radial-gradient(at 85% 85%, oklch(0.78 0.24 145 / 6%) 0px, transparent 55%),
-      radial-gradient(at 50% 0%,  oklch(0.68 0.26 280 / 5%) 0px, transparent 45%);
-  }
-
-  /* Grid dots background */
-  .dot-grid {
-    background-image: radial-gradient(oklch(1 0 0 / 4%) 1px, transparent 1px);
-    background-size: 28px 28px;
-  }
-
-  /* Page entry animation */
-  .fade-up {
-    animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .fade-up-1 { animation-delay: 0.05s; }
-  .fade-up-2 { animation-delay: 0.10s; }
-  .fade-up-3 { animation-delay: 0.15s; }
-  .fade-up-4 { animation-delay: 0.20s; }
-  .fade-up-5 { animation-delay: 0.25s; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0);    }
+  .badge-indigo {
+    background: oklch(0.52 0.24 264 / 10%);
+    color: oklch(0.42 0.20 264);
+    border: 1px solid oklch(0.52 0.24 264 / 25%);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 700;
   }
 
   /* Pulse dot */
@@ -201,28 +127,32 @@
     animation: pulseDot 2s ease-in-out infinite;
   }
   @keyframes pulseDot {
-    0%, 100% { opacity: 1; transform: scale(1);    }
-    50%       { opacity: 0.5; transform: scale(1.4); }
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.5); }
   }
 
-  /* Timer urgent state */
+  /* Page entry */
+  .fade-up {
+    animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .fade-up-1 { animation-delay: 0.04s; }
+  .fade-up-2 { animation-delay: 0.08s; }
+  .fade-up-3 { animation-delay: 0.12s; }
+  .fade-up-4 { animation-delay: 0.16s; }
+  .fade-up-5 { animation-delay: 0.20s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Timer urgent */
   .timer-urgent {
-    color: var(--red);
-    animation: timerPulse 0.8s ease-in-out infinite;
+    color: var(--brand-red);
+    animation: timerPulse 0.9s ease-in-out infinite;
   }
   @keyframes timerPulse {
     0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
-  }
-
-  /* Scanline overlay for terminal sections */
-  .scanlines {
-    background-image: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      oklch(0 0 0 / 4%) 2px,
-      oklch(0 0 0 / 4%) 4px
-    );
+    50% { opacity: 0.45; }
   }
 }

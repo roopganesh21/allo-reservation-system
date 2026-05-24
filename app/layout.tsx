@@ -10,9 +10,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Allo Reservation System — High Concurrency Inventory Engine",
+  title: "Allo Reservation System",
   description:
-    "A secure, concurrency-safe inventory reservation system utilizing PostgreSQL row-level locking (SELECT FOR UPDATE) built with Next.js, Prisma, and Supabase.",
+    "Concurrency-safe inventory reservation system with PostgreSQL row-level locking.",
 };
 
 export default function RootLayout({
@@ -24,13 +24,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-cyan-500/20 selection:text-cyan-200 antialiased">
+      <body className="min-h-full flex flex-col bg-background text-foreground antialiased">
         {children}
-        <Toaster richColors position="top-right" closeButton theme="dark" />
+        <Toaster richColors position="top-right" closeButton />
       </body>
     </html>
   );
