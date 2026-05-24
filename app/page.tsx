@@ -7,7 +7,39 @@ import { Database, ShieldAlert, Cpu, Warehouse as WarehouseIcon, Box, Sparkles }
 
 // Server component to fetch products and render the reservation portal
 export default async function ProductsPage() {
-  // Fetch products and inventory directly from the database (fully server-side!)
+  const now = new Date();
+
+  // 1. Run atomic Lazy Cleanup: Identify and release any expired reservations in a single transaction
+  await prisma.$transaction(async (tx) => {
+    const expired = await tx.reservation.findMany({
+      where: {
+        status: "PENDING",
+        expiresAt: { lt: now },
+      },
+    });
+
+    if (expired.length > 0) {
+      // Restore locked stock for each expired reservation
+      for (const res of expired) {
+        await tx.inventory.update({
+          where: { id: res.inventoryId },
+          data: {
+            reservedUnits: { decrement: res.quantity },
+          },
+        });
+      }
+
+      // Transition reservation statuses in one batch
+      await tx.reservation.updateMany({
+        where: {
+          id: { in: expired.map((res) => res.id) },
+        },
+        data: { status: "RELEASED" },
+      });
+    }
+  });
+
+  // 2. Fetch products and inventory directly from the database (fully server-side!)
   const products = await prisma.product.findMany({
     include: {
       inventory: {
