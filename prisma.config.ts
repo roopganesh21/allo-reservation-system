@@ -3,12 +3,19 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+// Smart Auto-switching for Prisma 7:
+// If running a migration or DB schema command in CLI, use DIRECT_URL (bypasses PgBouncer).
+// Otherwise, use the pooled DATABASE_URL for Next.js application queries.
+const dbUrl = process.argv.some(arg => arg.includes("migrate") || arg.includes("db"))
+  ? process.env["DIRECT_URL"]
+  : process.env["DATABASE_URL"];
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: dbUrl || process.env["DATABASE_URL"],
   },
 });
