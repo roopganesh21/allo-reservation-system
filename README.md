@@ -4,13 +4,13 @@ A production-grade, high-concurrency reservation portal designed to manage wareh
 
 ---
 
-## ## Overview
+## Overview
 
 Allo Reservation System is an inventory management dashboard that addresses the classic "double-booking" problem in e-commerce. When multiple users concurrently attempt to reserve the same inventory item from the same warehouse, the system uses pessimistic database locking to serialize operations, preventing stock over-allocation.
 
 ---
 
-## ## Architecture
+## Architecture
 
 The application is structured as a decoupled Next.js App Router project:
 *   **Database:** PostgreSQL hosted on Supabase (using PgBouncer for transaction pooling and direct connections for migrations).
@@ -51,7 +51,7 @@ erDiagram
 
 ---
 
-## ## Concurrency Strategy
+## Concurrency Strategy
 
 This is the most critical technical layer of the application. High-concurrency environments require safe state transitions, which are implemented as follows:
 
@@ -84,7 +84,7 @@ If Request A holds the lock on the row, Request B's `SELECT ... FOR UPDATE` quer
 
 ---
 
-## ## Expiry Handling
+## Expiry Handling
 
 Rather than utilizing background schedulers or external cron jobs (which can fail, introduce delay, or exceed free-tier server limits), this project implements a highly efficient **Lazy Cleanup** architecture:
 
@@ -97,7 +97,7 @@ Rather than utilizing background schedulers or external cron jobs (which can fai
 
 ---
 
-## ## API Reference
+## API Reference
 
 ### 1. Products
 *   **`GET /api/products`** — Silently cleans up expired reservations and returns all products, warehouses, and calculated live stock counts (`availableUnits = totalUnits - reservedUnits`).
@@ -119,7 +119,7 @@ Rather than utilizing background schedulers or external cron jobs (which can fai
 
 ---
 
-## ## Local Setup
+## Local Setup
 
 ### 1. Configure Environment Variables
 Create a `.env` file at the project root (`allo-reservation-system/.env`):
@@ -153,7 +153,7 @@ Open `http://localhost:3000` in your browser.
 
 ---
 
-## ## Tradeoffs & Future Improvements
+## Tradeoffs & Future Improvements
 
 To maintain a focused scope and implement a robust core reservation mechanic, the following engineering tradeoffs were made:
 
