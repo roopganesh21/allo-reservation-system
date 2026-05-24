@@ -147,7 +147,7 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
       <button
         onClick={handleReserve}
         disabled={loading}
-        className="btn-teal w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg"
+        className="btn-plum w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg"
       >
         {loading ? (
           <>

@@ -53,7 +53,7 @@ export default async function ProductsPage() {
           <div className="flex items-center gap-2.5">
             <div
               className="h-8 w-8 rounded-lg flex items-center justify-center"
-              style={{ background: "var(--teal)" }}
+              style={{ background: "var(--plum)" }}
             >
               <Tag className="h-4 w-4 text-white" />
             </div>
