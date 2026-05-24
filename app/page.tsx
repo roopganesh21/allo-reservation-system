@@ -1,69 +1,52 @@
 import React from "react";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ReserveButton from "@/components/ReserveButton";
-import { Database, ShieldAlert, Cpu, Warehouse as WarehouseIcon, Box, Sparkles } from "lucide-react";
+import {
+  Database,
+  ShieldCheck,
+  Cpu,
+  Warehouse as WarehouseIcon,
+  Package,
+  Zap,
+  Lock,
+} from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-// Server component to fetch products and render the reservation portal
 export default async function ProductsPage() {
   const now = new Date();
 
-  // 1. Run atomic Lazy Cleanup: Identify and release any expired reservations in a single transaction
+  // Lazy cleanup: release expired reservations
   await prisma.$transaction(async (tx) => {
     const expired = await tx.reservation.findMany({
-      where: {
-        status: "PENDING",
-        expiresAt: { lt: now },
-      },
+      where: { status: "PENDING", expiresAt: { lt: now } },
     });
-
     if (expired.length > 0) {
-      // Restore locked stock for each expired reservation
       for (const res of expired) {
         await tx.inventory.update({
           where: { id: res.inventoryId },
-          data: {
-            reservedUnits: { decrement: res.quantity },
-          },
+          data: { reservedUnits: { decrement: res.quantity } },
         });
       }
-
-      // Transition reservation statuses in one batch
       await tx.reservation.updateMany({
-        where: {
-          id: { in: expired.map((res) => res.id) },
-        },
+        where: { id: { in: expired.map((r) => r.id) } },
         data: { status: "RELEASED" },
       });
     }
   });
 
-  // 2. Fetch products and inventory directly from the database (fully server-side!)
   const products = await prisma.product.findMany({
-    include: {
-      inventory: {
-        include: {
-          warehouse: true,
-        },
-      },
-    },
-    orderBy: {
-      name: "asc",
-    },
+    include: { inventory: { include: { warehouse: true } } },
+    orderBy: { name: "asc" },
   });
 
-  // Calculate available units: available = total - reserved
   const productsWithAvailability = products.map((product) => ({
     id: product.id,
     name: product.name,
     inventory: product.inventory.map((inv) => ({
       id: inv.id,
-      productId: inv.productId,
-      warehouseId: inv.warehouseId,
       warehouseName: inv.warehouse.name,
       totalUnits: inv.totalUnits,
       reservedUnits: inv.reservedUnits,
@@ -71,198 +54,255 @@ export default async function ProductsPage() {
     })),
   }));
 
+  const totalAvailable = productsWithAvailability.reduce(
+    (sum, p) => sum + p.inventory.reduce((s, i) => s + i.availableUnits, 0),
+    0
+  );
+  const totalReserved = productsWithAvailability.reduce(
+    (sum, p) => sum + p.inventory.reduce((s, i) => s + i.reservedUnits, 0),
+    0
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 flex flex-col antialiased">
-      {/* Premium Header */}
-      <header className="border-b border-slate-800/80 bg-slate-950/50 backdrop-blur-md sticky top-0 z-50 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4.5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div className="min-h-screen mesh-bg dot-grid bg-background text-foreground flex flex-col">
+
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-background/80 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-400 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Database className="h-5 w-5 text-white animate-pulse" />
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 flex-shrink-0">
+              <Lock className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-indigo-200">
+              <h1 className="text-sm font-bold tracking-tight text-white leading-none">
                 Allo Reservation System
               </h1>
-              <p className="text-xs text-slate-400 font-medium">
-                High-Concurrency Row-Level Locking Engine
+              <p className="text-[10px] text-white/40 mt-0.5 font-mono">
+                Row-Level Locking Engine
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-full px-4 py-1.5 self-start md:self-auto shadow-inner">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-xs font-semibold text-slate-300">Supabase Connected</span>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-4 text-xs font-semibold text-white/50 font-mono">
+              <span>
+                <span className="text-cyan-400">{totalAvailable}</span> available
+              </span>
+              <span className="text-white/20">|</span>
+              <span>
+                <span className="text-amber-400">{totalReserved}</span> reserved
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400 pulse-dot" />
+              <span className="text-[11px] font-bold text-green-400 tracking-wide">LIVE</span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-10">
-        
-        {/* Concurrency System Architecture Panel */}
-        <section className="bg-gradient-to-r from-indigo-950/40 via-slate-950/60 to-cyan-950/30 border border-indigo-500/15 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 h-40 w-40 bg-indigo-500/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-          <div className="absolute bottom-0 left-0 h-40 w-40 bg-cyan-500/5 rounded-full blur-3xl -ml-10 -mb-10"></div>
-          
-          <div className="flex flex-col lg:flex-row gap-8 items-center relative z-10">
-            <div className="flex-1 space-y-4">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="h-3 w-3" /> System Architecture
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col gap-10">
+
+        {/* ── Stats Bar ──────────────────────────────────────────── */}
+        <div className="fade-up grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Products", value: products.length, icon: Package, color: "text-cyan-400", bg: "bg-cyan-400/10 border-cyan-400/20" },
+            { label: "Total Available", value: totalAvailable, icon: Zap, color: "text-green-400", bg: "bg-green-400/10 border-green-400/20" },
+            { label: "Reserved", value: totalReserved, icon: Lock, color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/20" },
+            { label: "Warehouses", value: 2, icon: WarehouseIcon, color: "text-violet-400", bg: "bg-violet-400/10 border-violet-400/20" },
+          ].map((stat, i) => (
+            <div
+              key={stat.label}
+              className={`fade-up fade-up-${i + 1} bg-card border border-white/[0.06] rounded-xl p-4 flex items-center gap-3 card-glow`}
+            >
+              <div className={`p-2 rounded-lg border ${stat.bg}`}>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-100 tracking-tight">
-                Concurrency-Safe Database Locking
+              <div>
+                <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
+                <p className="text-[11px] text-white/40 font-mono">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Architecture Panel ─────────────────────────────────── */}
+        <div className="fade-up fade-up-2 relative rounded-2xl border border-white/[0.06] bg-card overflow-hidden">
+          {/* accent stripe */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+          <div className="absolute top-0 left-0 w-40 h-40 bg-cyan-400/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-40 h-40 bg-violet-400/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2 pointer-events-none" />
+
+          <div className="relative p-6 md:p-8 flex flex-col lg:flex-row gap-8">
+            {/* Left: description */}
+            <div className="flex-1 space-y-5">
+              <div className="flex items-center gap-2">
+                <span className="badge-cyan">System Architecture</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white leading-tight">
+                Concurrency-Safe{" "}
+                <span className="glow-cyan">Row Locking</span>
               </h2>
-              <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-                This reservation dashboard implements **row-level locking** utilizing PostgreSQL&apos;s 
-                <code className="mx-1 px-1.5 py-0.5 rounded bg-slate-900 text-cyan-400 border border-slate-800 text-xs font-mono font-bold">SELECT ... FOR UPDATE</code>.
-                When a user attempts to lock quantity, other write operations on that specific warehouse row are blocked, preventing race-conditions or double-bookings under high concurrent load.
+              <p className="text-sm text-white/50 leading-relaxed max-w-lg">
+                Every reservation runs inside a PostgreSQL transaction with{" "}
+                <code className="font-mono text-cyan-400 bg-white/5 px-1.5 py-0.5 rounded text-xs">
+                  SELECT … FOR UPDATE
+                </code>
+                . The row is locked for the duration — no two sessions can
+                oversell the same unit simultaneously.
               </p>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
-                    <Cpu className="h-4 w-4" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                {[
+                  { icon: Cpu, label: "Prisma ORM", sub: "Type-safe DB client", color: "text-cyan-400", bg: "bg-cyan-400/10 border-cyan-400/20" },
+                  { icon: Database, label: "Supabase PG", sub: "PostgreSQL ACID", color: "text-violet-400", bg: "bg-violet-400/10 border-violet-400/20" },
+                  { icon: ShieldCheck, label: "Atomic Guard", sub: "Rollback on conflict", color: "text-green-400", bg: "bg-green-400/10 border-green-400/20" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-start gap-3">
+                    <div className={`p-2 rounded-lg border ${item.bg} flex-shrink-0`}>
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white/80">{item.label}</p>
+                      <p className="text-[11px] text-white/35 mt-0.5">{item.sub}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-200">Prisma 7 Edge</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Optimized lightweight runtime driver</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-                    <Database className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-200">Supabase DB</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">PostgreSQL instances in AP-South-1</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
-                    <ShieldAlert className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-200">Double Book Shield</h4>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Atomic transaction checks & rollbacks</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Visualizer mock */}
-            <div className="w-full lg:w-96 bg-slate-950/80 border border-slate-800/80 rounded-xl p-4.5 font-mono text-[11px] text-slate-400 shadow-inner">
-              <div className="flex items-center justify-between border-b border-slate-900 pb-2.5 mb-3">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">🔒 LIVE TRANSACTION LOCKS</span>
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
-              </div>
-              <div className="space-y-2">
-                <p className="text-slate-500">{"// Step 1: Secure database connection"}</p>
-                <p className="text-cyan-400 font-semibold">tx.$queryRaw`SELECT * FROM &quot;Inventory&quot; WHERE id = $1 FOR UPDATE`</p>
-                <p className="text-emerald-400">⚡ ROW LOCKED (Other sessions waiting on row id...)</p>
-                <p className="text-slate-500">{"// Step 2: Validate live units"}</p>
-                <p className="text-slate-300">availableUnits = {`totalUnits (${10}) - reservedUnits (${0})`}</p>
-                <p className="text-purple-400 font-semibold">{"tx.inventory.update({ reservedUnits: { increment: qty } })"}</p>
-                <p className="text-slate-500">{"// Step 3: Insert expiration token & commit"}</p>
-                <p className="text-yellow-400 font-semibold">{"tx.reservation.create({ status: 'PENDING' })"}</p>
-                <p className="text-emerald-400">🔓 COMMIT (Row lock released successfully)</p>
+            {/* Right: terminal */}
+            <div className="w-full lg:w-[380px] flex-shrink-0">
+              <div className="rounded-xl border border-white/[0.07] bg-[oklch(0.07_0.015_264)] overflow-hidden scanlines">
+                <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500/80" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-green-500/80" />
+                  <span className="ml-2 text-[10px] text-white/25 font-mono">reservation.tx</span>
+                </div>
+                <div className="p-4 space-y-1.5 font-mono text-[11px] leading-relaxed">
+                  <p className="text-white/30">{"// 1. Acquire row lock"}</p>
+                  <p className="text-cyan-400">
+                    {`tx.$queryRaw\`SELECT * FROM "Inventory"`}
+                  </p>
+                  <p className="text-cyan-400 pl-4">{`WHERE id = \${id} FOR UPDATE\``}</p>
+                  <p className="text-green-400 mt-1">⚡ ROW LOCKED — others queued</p>
+                  <p className="text-white/30 mt-2">{"// 2. Check availability"}</p>
+                  <p className="text-white/70">
+                    available = totalUnits − reservedUnits
+                  </p>
+                  <p className="text-white/30 mt-2">{"// 3. Atomic write"}</p>
+                  <p className="text-violet-400">
+                    tx.inventory.update({"{"} reservedUnits++ {"}"})
+                  </p>
+                  <p className="text-amber-400">
+                    {"tx.reservation.create({ status: 'PENDING' })"}
+                  </p>
+                  <p className="text-green-400 mt-1">🔓 COMMIT — lock released</p>
+                </div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
-        {/* Product Cards Grid */}
-        <section className="space-y-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Box className="h-5 w-5 text-cyan-400" />
-            <h3 className="text-lg font-bold tracking-tight text-slate-100">Seeded Products & Stock Live Inventory</h3>
+        {/* ── Product Grid ───────────────────────────────────────── */}
+        <section className="space-y-5">
+          <div className="fade-up fade-up-3 flex items-center gap-3 pb-3 border-b border-white/[0.06]">
+            <Package className="h-4 w-4 text-cyan-400" />
+            <h3 className="text-sm font-bold text-white/70 uppercase tracking-widest font-mono">
+              Live Inventory
+            </h3>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {productsWithAvailability.map((product) => (
-              <Card 
-                key={product.id} 
-                className="bg-slate-900/40 border-slate-800/80 backdrop-blur-sm shadow-md hover:shadow-indigo-500/5 hover:border-slate-700/60 transition-all flex flex-col group"
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {productsWithAvailability.map((product, pi) => (
+              <div
+                key={product.id}
+                className={`fade-up fade-up-${Math.min(pi + 3, 5)} group relative bg-card border border-white/[0.06] rounded-2xl overflow-hidden card-glow flex flex-col`}
               >
-                <CardHeader className="pb-4 border-b border-slate-800/40 bg-slate-900/20">
-                  <div className="flex justify-between items-start gap-2">
-                    <CardTitle className="text-base font-black text-slate-200 tracking-tight leading-tight group-hover:text-cyan-400 transition-colors">
+                {/* top accent */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                {/* Product header */}
+                <div className="px-5 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-sm font-bold text-white leading-tight group-hover:text-cyan-400 transition-colors">
                       {product.name}
-                    </CardTitle>
-                    <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400 select-none">
-                      {product.id}
+                    </h4>
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] border-white/10 text-white/25 font-mono shrink-0"
+                    >
+                      {product.id.slice(-8)}
                     </Badge>
                   </div>
-                  <CardDescription className="text-xs text-slate-500 font-medium">
-                    Stock tracking across active distribution hubs
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="pt-6 flex-1 flex flex-col gap-6">
+                  <p className="text-[11px] text-white/30 mt-1 font-mono">
+                    {product.inventory.length} warehouse
+                    {product.inventory.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+
+                {/* Inventory rows */}
+                <div className="flex flex-col gap-3 p-4 flex-1">
                   {product.inventory.map((inv) => (
-                    <div 
-                      key={inv.id} 
-                      className="border border-slate-800 bg-slate-950/20 rounded-xl p-4 flex flex-col gap-4.5 hover:bg-slate-950/40 hover:border-indigo-500/25 transition-all shadow-inner"
+                    <div
+                      key={inv.id}
+                      className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 flex flex-col gap-3 hover:border-cyan-400/20 hover:bg-cyan-400/[0.02] transition-all"
                     >
-                      {/* Warehouse Hub Title */}
-                      <div className="flex justify-between items-center gap-2">
-                        <div className="flex items-center gap-2 text-slate-300">
-                          <WarehouseIcon className="h-4 w-4 text-indigo-400" />
-                          <span className="text-xs font-bold">{inv.warehouseName}</span>
+                      {/* Warehouse row */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <WarehouseIcon className="h-3.5 w-3.5 text-violet-400 flex-shrink-0" />
+                          <span className="text-xs font-semibold text-white/70">
+                            {inv.warehouseName}
+                          </span>
                         </div>
-                        
-                        {/* Live Available Status */}
                         {inv.availableUnits === 0 ? (
-                          <Badge className="bg-red-500/10 border border-red-500/30 text-red-400 text-[10px] font-bold">
-                            Out of Stock
-                          </Badge>
+                          <span className="badge-red">Out of Stock</span>
                         ) : (
-                          <Badge className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
-                            {inv.availableUnits} Available
-                          </Badge>
+                          <span className="badge-green">
+                            {inv.availableUnits} left
+                          </span>
                         )}
                       </div>
 
-                      {/* Stock Numbers breakdown */}
-                      <div className="grid grid-cols-2 gap-3 border-y border-slate-800/50 py-3 text-[11px] text-slate-400 font-semibold select-none">
-                        <div className="flex justify-between items-center px-2 border-r border-slate-800/50">
-                          <span>Total Stock:</span>
-                          <span className="text-slate-200 font-extrabold">{inv.totalUnits}</span>
+                      {/* Stock numbers */}
+                      <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                        <div className="bg-white/[0.03] rounded-lg px-3 py-2 flex justify-between items-center border border-white/[0.04]">
+                          <span className="text-white/35">Total</span>
+                          <span className="text-white/80 font-bold">{inv.totalUnits}</span>
                         </div>
-                        <div className="flex justify-between items-center px-2">
-                          <span>Locked/Reserved:</span>
-                          <span className={`${inv.reservedUnits > 0 ? "text-yellow-400 font-bold" : "text-slate-400"}`}>
+                        <div className="bg-white/[0.03] rounded-lg px-3 py-2 flex justify-between items-center border border-white/[0.04]">
+                          <span className="text-white/35">Reserved</span>
+                          <span className={`font-bold ${inv.reservedUnits > 0 ? "text-amber-400" : "text-white/30"}`}>
                             {inv.reservedUnits}
                           </span>
                         </div>
                       </div>
 
-                      {/* Client Reserve Button */}
-                      <ReserveButton 
-                        inventoryId={inv.id} 
-                        availableUnits={inv.availableUnits} 
+                      {/* Reserve button */}
+                      <ReserveButton
+                        inventoryId={inv.id}
+                        availableUnits={inv.availableUnits}
                       />
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </section>
       </main>
 
-      {/* Premium Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/50 py-6 mt-16 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-medium">
-            &copy; {new Date().getFullYear()} Allo Reservation System. Designed for high fidelity.
-          </p>
-          <div className="flex items-center gap-4.5 font-bold">
-            <span className="hover:text-slate-300 transition-colors">Prisma 7.8</span>
-            <span className="text-slate-800">&#8226;</span>
-            <span className="hover:text-slate-300 transition-colors">Next.js 16</span>
-            <span className="text-slate-800">&#8226;</span>
-            <span className="hover:text-slate-300 transition-colors">Supabase PostgreSQL</span>
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <footer className="border-t border-white/[0.05] py-5 mt-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-3 text-[11px] font-mono text-white/20">
+          <p>© {new Date().getFullYear()} Allo Reservation System</p>
+          <div className="flex items-center gap-3">
+            <span>Next.js</span>
+            <span className="text-white/10">·</span>
+            <span>Prisma</span>
+            <span className="text-white/10">·</span>
+            <span>Supabase PostgreSQL</span>
           </div>
         </div>
       </footer>
