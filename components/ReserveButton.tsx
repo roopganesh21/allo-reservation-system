@@ -147,17 +147,16 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
       <button
         onClick={handleReserve}
         disabled={loading}
-        className="btn-teal w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg border"
-        style={{ color: "#000000", borderColor: "#000000" }}
+        className="btn-teal w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm rounded-lg border border-black"
       >
         {loading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" style={{ color: "#000000" }} />
+            <Loader2 className="h-4 w-4 animate-spin" />
             Reserving...
           </>
         ) : (
           <>
-            <ShoppingCart className="h-4 w-4" style={{ color: "#000000" }} />
+            <ShoppingCart className="h-4 w-4" />
             Reserve
           </>
         )}
