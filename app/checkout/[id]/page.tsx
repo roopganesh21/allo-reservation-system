@@ -109,7 +109,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         setPurchaseStatus("EXPIRED");
         toast.error("Purchase Failed", {
           id: toastId,
-          description: "This reservation has expired and the stock has been released.",
+          description: "Your reservation expired. Please start over.",
         });
         return;
       }
@@ -281,7 +281,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
               <div>
                 <h4 className="text-xs font-extrabold text-red-400">Reservation Expired</h4>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5 leading-relaxed">
-                  Your 10-minute hold has elapsed. The row lock has been released and inventory restored.
+                  Your reservation expired. Please start over.
                 </p>
               </div>
             </div>

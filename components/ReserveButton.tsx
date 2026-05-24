@@ -56,13 +56,17 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
 
       if (!response.ok) {
         if (response.status === 409) {
-          setError("Not enough stock");
+          // Dynamically parse the available units from the error message if possible
+          const match = data.error?.match(/Only (\d+) units/);
+          const currentAvailable = match ? match[1] : availableUnits;
+
+          setError(`Only ${currentAvailable} units available — someone may have just taken the last one.`);
           toast.error("Reservation Failed", {
             id: toastId,
-            description: "Conflict: Not enough stock. Row locking protected double booking.",
+            description: `Only ${currentAvailable} units available — someone may have just taken the last one.`,
           });
         } else {
-          setError(data.error || "Failed to create reservation");
+          setError(data.error || "An unexpected error occurred.");
           toast.error("Failed to Reserve", {
             id: toastId,
             description: data.error || "An unexpected error occurred.",
@@ -83,7 +87,7 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
       setError("Network error. Please try again.");
       toast.error("Connection Failed", {
         id: toastId,
-        description: "Could not reach reservation API.",
+        description: "Network error. Please try again.",
       });
     } finally {
       setLoading(false);
