@@ -65,6 +65,11 @@ export default function ReserveButton({ inventoryId, availableUnits }: ReserveBu
             id: toastId,
             description: `Only ${currentAvailable} units available — someone may have just taken the last one.`,
           });
+
+          // Refresh the page to sync available stocks in the UI
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         } else {
           setError(data.error || "An unexpected error occurred.");
           toast.error("Failed to Reserve", {

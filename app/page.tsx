@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import ReserveButton from "@/components/ReserveButton";
 import { Database, ShieldAlert, Cpu, Warehouse as WarehouseIcon, Box, Sparkles } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Server component to fetch products and render the reservation portal
 export default async function ProductsPage() {
   const now = new Date();

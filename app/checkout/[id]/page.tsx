@@ -166,7 +166,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
       });
       
       setTimeout(() => {
-        router.push("/");
+        window.location.href = "/";
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -197,7 +197,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push("/")}
+          onClick={() => {
+            window.location.href = "/";
+          }}
           disabled={actionLoading}
           className="text-slate-400 hover:text-slate-200 hover:bg-slate-900/50"
         >
@@ -373,7 +375,9 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
           ) : (
             // Redirection / Home Button when closed
             <Button
-              onClick={() => router.push("/")}
+              onClick={() => {
+                window.location.href = "/";
+              }}
               disabled={actionLoading}
               className="w-full bg-slate-900 border border-slate-800 hover:bg-slate-800 hover:text-slate-100 text-slate-300 font-extrabold text-xs py-5 active:scale-95 transition-all cursor-pointer"
             >
